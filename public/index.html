@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Submission Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .submissions {
+            margin-top: 30px;
+        }
+        .submission-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .submission-item:hover {
+            background-color: #f1f1f1;
+        }
+        .submission-content {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success-message {
+            color: green;
+            margin-top: 10px;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Text Submission Portal</h1>
+    
+    <div>
+        <h2>Submit New Text</h2>
+        <textarea id="textInput" placeholder="Enter your text here..."></textarea>
+        <button onclick="submitText()">Submit</button>
+        <div id="message"></div>
+    </div>
+    
+    <div class="submissions">
+        <h2>Previous Submissions</h2>
+        <button onclick="loadSubmissions()">Refresh Submissions</button>
+        <div id="submissionsList"></div>
+    </div>
+    
+    <script>
+        // Load submissions when page loads
+        document.addEventListener('DOMContentLoaded', loadSubmissions);
+        
+        function submitText() {
+            const text = document.getElementById('textInput').value;
+            const messageDiv = document.getElementById('message');
+            
+            if (!text || text.trim() === '') {
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Please enter some text before submitting.';
+                return;
+            }
+            
+            fetch('/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = data.message;
+                    document.getElementById('textInput').value = '';
+                    loadSubmissions(); // Refresh the submissions list
+                } else {
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = data.message;
+                }
+            })
+            .catch(error => {
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error submitting text: ' + error.message;
+            });
+        }
+        
+        function loadSubmissions() {
+            const submissionsList = document.getElementById('submissionsList');
+            
+            fetch('/submissions')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.submissions.length === 0) {
+                        submissionsList.innerHTML = '<p>No submissions yet.</p>';
+                        return;
+                    }
+                    
+                    submissionsList.innerHTML = '';
+                    // Sort files by name (newest first since our filenames start with timestamps)
+                    data.submissions.sort().reverse().forEach(filename => {
+                        const item = document.createElement('div');
+                        item.className = 'submission-item';
+                        item.textContent = filename;
+                        item.onclick = () => viewSubmission(filename);
+                        submissionsList.appendChild(item);
+                    });
+                } else {
+                    submissionsList.innerHTML = `<p class="error-message">${data.message}</p>`;
+                }
+            })
+            .catch(error => {
+                submissionsList.innerHTML = `<p class="error-message">Error loading submissions: ${error.message}</p>`;
+            });
+        }
+        
+        function viewSubmission(filename) {
+            fetch(`/submissions/${filename}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Check if content display div already exists for this item
+                    const existingContent = document.getElementById(`content-${filename}`);
+                    if (existingContent) {
+                        existingContent.remove(); // Toggle off if already showing
+                        return;
+                    }
+                    
+                    // Create content display div
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'submission-content';
+                    contentDiv.id = `content-${filename}`;
+                    contentDiv.textContent = data.content;
+                    
+                    // Find the submission item and append the content after it
+                    const submissionItem = Array.from(document.getElementsByClassName('submission-item'))
+                        .find(item => item.textContent === filename);
+                    submissionItem.appendChild(contentDiv);
+                }
+            })
+            .catch(error => {
+                console.error('Error viewing submission:', error);
+            });
+        }
+    </script>
+</body>
+</html>
