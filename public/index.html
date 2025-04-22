@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Submission Portal</title>
+    <title>File Upload Portal</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,16 +11,54 @@
             margin: 0 auto;
             padding: 20px;
         }
-        h1 {
+        h1, h2 {
             color: #333;
         }
         textarea {
             width: 100%;
-            height: 200px;
+            height: 150px;
             margin-bottom: 10px;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 4px 4px 0 0;
+            margin-bottom: -1px;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 12px 16px;
+            transition: 0.3s;
+            font-size: 16px;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: white;
+            border-bottom: 2px solid #4CAF50;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 0 0 4px 4px;
+            animation: fadeEffect 1s;
+        }
+        @keyframes fadeEffect {
+            from {opacity: 0;}
+            to {opacity: 1;}
         }
         button {
             background-color: #4CAF50;
@@ -33,26 +71,47 @@
         button:hover {
             background-color: #45a049;
         }
-        .submissions {
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .file-input-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .file-input-button {
+            display: inline-block;
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .file-name {
+            margin-left: 10px;
+            font-style: italic;
+        }
+        .uploads {
             margin-top: 30px;
         }
-        .submission-item {
+        .upload-item {
             padding: 10px;
             margin-bottom: 5px;
             background-color: #f9f9f9;
             border-radius: 4px;
             cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .submission-item:hover {
+        .upload-item:hover {
             background-color: #f1f1f1;
-        }
-        .submission-content {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            white-space: pre-wrap;
         }
         .success-message {
             color: green;
@@ -62,35 +121,145 @@
             color: red;
             margin-top: 10px;
         }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .download-btn {
+            padding: 5px 10px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 3px;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        #fileInfo {
+            margin-top: 10px;
+            color: #666;
+        }
+        #debug {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <h1>Text Submission Portal</h1>
+    <h1>Local File Portal</h1>
     
-    <div>
-        <h2>Submit New Text</h2>
-        <textarea id="textInput" placeholder="Enter your text here..."></textarea>
-        <button onclick="submitText()">Submit</button>
-        <div id="message"></div>
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'TextSubmission')" id="defaultOpen">Text Submission</button>
+        <button class="tablinks" onclick="openTab(event, 'FileUpload')">File Upload</button>
     </div>
     
-    <div class="submissions">
-        <h2>Previous Submissions</h2>
-        <button onclick="loadSubmissions()">Refresh Submissions</button>
-        <div id="submissionsList"></div>
+    <div id="TextSubmission" class="tabcontent">
+        <h2>Submit Text</h2>
+        <div class="form-group">
+            <textarea id="textInput" placeholder="Enter your text here..."></textarea>
+        </div>
+        <button onclick="submitText()">Submit Text</button>
+        <div id="textMessage" class="message"></div>
     </div>
+    
+    <div id="FileUpload" class="tabcontent">
+        <h2>Upload File</h2>
+        <div class="form-group">
+            <div class="file-input-wrapper">
+                <div class="file-input-button">Select File</div>
+                <input type="file" id="fileInput" onchange="updateFileLabel()">
+            </div>
+            <span id="fileName" class="file-name">No file selected</span>
+            <div id="fileInfo"></div>
+        </div>
+        <button onclick="uploadFile()">Upload File</button>
+        <div id="fileMessage" class="message"></div>
+    </div>
+    
+    <div class="uploads">
+        <h2>Previous Uploads</h2>
+        <button onclick="loadUploads()">Refresh Uploads</button>
+        <div id="uploadsList"></div>
+    </div>
+    
+    <div id="debug"></div>
     
     <script>
-        // Load submissions when page loads
-        document.addEventListener('DOMContentLoaded', loadSubmissions);
+        // For debugging
+        function showDebug(msg) {
+            const debugDiv = document.getElementById('debug');
+            debugDiv.style.display = 'block';
+            debugDiv.textContent += msg + '\n';
+        }
+        
+        // Clear debug area
+        function clearDebug() {
+            const debugDiv = document.getElementById('debug');
+            debugDiv.textContent = '';
+        }
+        
+        // Default open the text submission tab
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById("defaultOpen").click();
+            loadUploads();
+        });
+        
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        function updateFileLabel() {
+            const fileInput = document.getElementById('fileInput');
+            const fileName = document.getElementById('fileName');
+            const fileInfo = document.getElementById('fileInfo');
+            
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileName.textContent = file.name;
+                
+                // Show file info
+                const fileSize = formatFileSize(file.size);
+                const fileType = file.type || 'Unknown type';
+                fileInfo.innerHTML = `Type: ${fileType}<br>Size: ${fileSize}`;
+            } else {
+                fileName.textContent = 'No file selected';
+                fileInfo.innerHTML = '';
+            }
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' bytes';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+            else return (bytes / 1048576).toFixed(2) + ' MB';
+        }
         
         function submitText() {
+            clearDebug();
+            showDebug('Submitting text...');
+            
             const text = document.getElementById('textInput').value;
-            const messageDiv = document.getElementById('message');
+            const messageDiv = document.getElementById('textMessage');
             
             if (!text || text.trim() === '') {
                 messageDiv.className = 'error-message';
                 messageDiv.textContent = 'Please enter some text before submitting.';
+                showDebug('Error: Empty text submission');
                 return;
             }
             
@@ -101,82 +270,220 @@
                 },
                 body: JSON.stringify({ text }),
             })
-            .then(response => response.json())
+            .then(response => {
+                showDebug(`Submit response status: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                showDebug('Submit response data: ' + JSON.stringify(data));
                 if (data.success) {
                     messageDiv.className = 'success-message';
                     messageDiv.textContent = data.message;
                     document.getElementById('textInput').value = '';
-                    loadSubmissions(); // Refresh the submissions list
+                    loadUploads(); // Refresh the uploads list
                 } else {
                     messageDiv.className = 'error-message';
                     messageDiv.textContent = data.message;
                 }
             })
             .catch(error => {
+                showDebug('Submit error: ' + error.message);
                 messageDiv.className = 'error-message';
                 messageDiv.textContent = 'Error submitting text: ' + error.message;
             });
         }
         
-        function loadSubmissions() {
-            const submissionsList = document.getElementById('submissionsList');
+        function uploadFile() {
+            clearDebug();
+            showDebug('Uploading file...');
             
-            fetch('/submissions')
-            .then(response => response.json())
+            const fileInput = document.getElementById('fileInput');
+            const messageDiv = document.getElementById('fileMessage');
+            
+            if (fileInput.files.length === 0) {
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Please select a file first.';
+                showDebug('Error: No file selected');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => {
+                showDebug(`Upload response status: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                showDebug('Upload response data: ' + JSON.stringify(data));
                 if (data.success) {
-                    if (data.submissions.length === 0) {
-                        submissionsList.innerHTML = '<p>No submissions yet.</p>';
-                        return;
-                    }
-                    
-                    submissionsList.innerHTML = '';
-                    // Sort files by name (newest first since our filenames start with timestamps)
-                    data.submissions.sort().reverse().forEach(filename => {
-                        const item = document.createElement('div');
-                        item.className = 'submission-item';
-                        item.textContent = filename;
-                        item.onclick = () => viewSubmission(filename);
-                        submissionsList.appendChild(item);
-                    });
+                    messageDiv.className = 'success-message';
+                    messageDiv.textContent = data.message;
+                    fileInput.value = '';
+                    document.getElementById('fileName').textContent = 'No file selected';
+                    document.getElementById('fileInfo').innerHTML = '';
+                    loadUploads(); // Refresh the uploads list
                 } else {
-                    submissionsList.innerHTML = `<p class="error-message">${data.message}</p>`;
+                    messageDiv.className = 'error-message';
+                    messageDiv.textContent = data.message;
                 }
             })
             .catch(error => {
-                submissionsList.innerHTML = `<p class="error-message">Error loading submissions: ${error.message}</p>`;
+                showDebug('Upload error: ' + error.message);
+                messageDiv.className = 'error-message';
+                messageDiv.textContent = 'Error uploading file: ' + error.message;
             });
         }
         
-        function viewSubmission(filename) {
-            fetch(`/submissions/${filename}`)
-            .then(response => response.json())
+        function loadUploads() {
+            clearDebug();
+            showDebug('Loading uploads...');
+            
+            const uploadsList = document.getElementById('uploadsList');
+            
+            fetch('/uploads')
+            .then(response => {
+                showDebug(`Uploads response status: ${response.status}`);
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    showDebug(`Received non-JSON response: ${contentType}`);
+                    return response.text().then(text => {
+                        showDebug(`Response body: ${text.substring(0, 200)}...`);
+                        throw new Error('Server did not return JSON');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
+                showDebug('Uploads data: ' + JSON.stringify(data));
                 if (data.success) {
-                    // Check if content display div already exists for this item
-                    const existingContent = document.getElementById(`content-${filename}`);
-                    if (existingContent) {
-                        existingContent.remove(); // Toggle off if already showing
+                    if (data.uploads.length === 0) {
+                        uploadsList.innerHTML = '<p>No uploads yet.</p>';
                         return;
                     }
                     
-                    // Create content display div
-                    const contentDiv = document.createElement('div');
-                    contentDiv.className = 'submission-content';
-                    contentDiv.id = `content-${filename}`;
-                    contentDiv.textContent = data.content;
-                    
-                    // Find the submission item and append the content after it
-                    const submissionItem = Array.from(document.getElementsByClassName('submission-item'))
-                        .find(item => item.textContent === filename);
-                    submissionItem.appendChild(contentDiv);
+                    uploadsList.innerHTML = '';
+                    // Sort files by name (newest first since our filenames start with timestamps)
+                    data.uploads.sort().reverse().forEach(filename => {
+                        const item = document.createElement('div');
+                        item.className = 'upload-item';
+                        
+                        const nameDiv = document.createElement('div');
+                        nameDiv.textContent = filename;
+                        item.appendChild(nameDiv);
+                        
+                        const actionDiv = document.createElement('div');
+                        actionDiv.className = 'action-buttons';
+                        
+                        // Download button
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = `/download/${filename}`;
+                        downloadLink.className = 'download-btn';
+                        downloadLink.textContent = 'Download';
+                        downloadLink.onclick = (e) => { e.stopPropagation(); };
+                        actionDiv.appendChild(downloadLink);
+                        
+                        item.appendChild(actionDiv);
+                        
+                        // Click on item to view (for text files)
+                        item.onclick = () => {
+                            // Only try to view content if it's likely a text file
+                            if (filename.endsWith('.txt') || filename.endsWith('.log') || 
+                                filename.endsWith('.md') || filename.endsWith('.csv') ||
+                                filename.endsWith('.json') || filename.endsWith('.xml') ||
+                                filename.endsWith('.html') || filename.endsWith('.css') ||
+                                filename.endsWith('.js')) {
+                                viewUpload(filename);
+                            }
+                        };
+                        
+                        uploadsList.appendChild(item);
+                    });
+                } else {
+                    uploadsList.innerHTML = `<p class="error-message">${data.message}</p>`;
                 }
             })
             .catch(error => {
-                console.error('Error viewing submission:', error);
+                showDebug('Uploads error: ' + error.message);
+                uploadsList.innerHTML = `<p class="error-message">Error loading uploads: ${error.message}</p>`;
             });
         }
+        
+        function viewUpload(filename) {
+            showDebug(`Viewing upload: ${filename}`);
+            
+            fetch(`/uploads/${filename}`)
+            .then(response => {
+                showDebug(`View upload response status: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                
+                // Check if this is a text file we can display
+                const contentType = response.headers.get('content-type');
+                if (contentType && (contentType.includes('text/') || 
+                    contentType.includes('application/json') || 
+                    contentType.includes('application/xml'))) {
+                    return response.text();
+                } else {
+                    showDebug(`Not displaying content for type: ${contentType}`);
+                    throw new Error('Not a displayable text file');
+                }
+            })
+            .then(content => {
+                // Check if content display div already exists for this item
+                const existingContent = document.getElementById(`content-${filename}`);
+                if (existingContent) {
+                    existingContent.remove(); // Toggle off if already showing
+                    return;
+                }
+                
+                // Find the upload item and append content display div after it
+                const uploadItem = Array.from(document.getElementsByClassName('upload-item'))
+                    .find(item => item.querySelector('div').textContent === filename);
+                
+                // Create content display div
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'submission-content';
+                contentDiv.id = `content-${filename}`;
+                contentDiv.style.whiteSpace = 'pre-wrap';
+                contentDiv.textContent = content;
+                
+                // Insert after the upload item
+                uploadItem.parentNode.insertBefore(contentDiv, uploadItem.nextSibling);
+            })
+            .catch(error => {
+                showDebug('View upload error: ' + error.message);
+                if (error.message !== 'Not a displayable text file') {
+                    console.error('Error viewing upload:', error);
+                }
+            });
+        }
+        
+        // Add a button to toggle debug info
+        document.addEventListener('DOMContentLoaded', function() {
+            const h1 = document.querySelector('h1');
+            const debugButton = document.createElement('button');
+            debugButton.textContent = 'Toggle Debug Info';
+            debugButton.style.marginLeft = '10px';
+            debugButton.style.fontSize = '12px';
+            debugButton.onclick = function() {
+                const debugDiv = document.getElementById('debug');
+                debugDiv.style.display = debugDiv.style.display === 'none' ? 'block' : 'none';
+            };
+            h1.appendChild(debugButton);
+        });
     </script>
 </body>
 </html>
