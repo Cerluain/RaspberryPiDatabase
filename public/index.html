@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Upload Portal with Metadata</title>
+    <title>File Upload Portal</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,14 +14,6 @@
         }
         h1, h2, h3 {
             color: #333;
-        }
-        textarea {
-            width: 100%;
-            height: 150px;
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
         }
         .form-group {
             margin-bottom: 15px;
@@ -53,37 +45,6 @@
             padding: 8px 12px;
             border-radius: 4px;
             cursor: pointer;
-        }
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
-            border-radius: 4px 4px 0 0;
-            margin-bottom: -1px;
-        }
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 12px 16px;
-            transition: 0.3s;
-            font-size: 16px;
-        }
-        .tab button:hover {
-            background-color: #ddd;
-        }
-        .tab button.active {
-            background-color: white;
-            border-bottom: 2px solid #4CAF50;
-        }
-        .tabcontent {
-            display: none;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 0 0 4px 4px;
-            animation: fadeEffect 1s;
         }
         .metadata-section {
             background-color: #f9f9f9;
@@ -124,10 +85,6 @@
             cursor: pointer;
             margin-top: 10px;
         }
-        @keyframes fadeEffect {
-            from {opacity: 0;}
-            to {opacity: 1;}
-        }
         button {
             background-color: #4CAF50;
             color: white;
@@ -138,18 +95,6 @@
         }
         button:hover {
             background-color: #45a049;
-        }
-        .button-secondary {
-            background-color: #2196F3;
-        }
-        .button-secondary:hover {
-            background-color: #0b7dda;
-        }
-        .button-warning {
-            background-color: #ff9800;
-        }
-        .button-warning:hover {
-            background-color: #e68a00;
         }
         .file-input-wrapper {
             position: relative;
@@ -210,15 +155,6 @@
             font-size: 14px;
             display: none;
         }
-        .upload-content {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            white-space: pre-wrap;
-            display: none;
-        }
         .action-buttons {
             display: flex;
             gap: 5px;
@@ -237,9 +173,6 @@
         .download-btn {
             background-color: #4CAF50;
         }
-        .edit-btn {
-            background-color: #ff9800;
-        }
         #fileInfo {
             margin-top: 10px;
             color: #666;
@@ -251,23 +184,6 @@
         .error-message {
             color: red;
             margin-top: 10px;
-        }
-        .search-container {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        .search-container input {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .search-container select {
-            width: 150px;
-        }
-        .search-container button {
-            padding: 8px 16px;
         }
         .metadata-table {
             width: 100%;
@@ -282,80 +198,12 @@
             font-weight: bold;
             width: 120px;
         }
-        .edit-metadata-form {
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 10px;
-        }
-        #debug {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #f8f8f8;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            white-space: pre-wrap;
-            display: none;
-        }
     </style>
 </head>
 <body>
     <h1>File Upload Portal</h1>
     
-    <div class="tab">
-        <button class="tablinks" onclick="openTab(event, 'TextSubmission')" id="defaultOpen">Text Submission</button>
-        <button class="tablinks" onclick="openTab(event, 'FileUpload')">File Upload</button>
-        <button class="tablinks" onclick="openTab(event, 'Search')">Search</button>
-    </div>
-    
-    <div id="TextSubmission" class="tabcontent">
-        <h2>Submit Text</h2>
-        <div class="form-group">
-            <label for="textInput">Text Content:</label>
-            <textarea id="textInput" placeholder="Enter your text here..."></textarea>
-        </div>
-        
-        <div class="metadata-section">
-            <div class="metadata-toggle" onclick="toggleMetadataFields('textMetadataFields')">
-                Add Metadata (optional) ▼
-            </div>
-            <div id="textMetadataFields" class="metadata-fields hidden">
-                <div class="form-group">
-                    <label for="textTitle">Title:</label>
-                    <input type="text" id="textTitle">
-                </div>
-                <div class="form-group">
-                    <label for="textAuthor">Author:</label>
-                    <input type="text" id="textAuthor">
-                </div>
-                <div class="form-group">
-                    <label for="textPublisher">Publisher:</label>
-                    <input type="text" id="textPublisher">
-                </div>
-                <div class="form-group">
-                    <label for="textTags">Tags (comma separated):</label>
-                    <input type="text" id="textTags" placeholder="tag1, tag2, tag3">
-                </div>
-                <div class="form-group">
-                    <label for="textSeries">Series:</label>
-                    <input type="text" id="textSeries">
-                </div>
-                <div class="form-group">
-                    <label for="textIdentifier">Identifier:</label>
-                    <input type="text" id="textIdentifier" placeholder="ISBN, DOI, etc.">
-                </div>
-                
-                <h3>Custom Fields:</h3>
-                <div id="textCustomFields"></div>
-                <button type="button" class="add-field-btn" onclick="addCustomField('textCustomFields')">Add Custom Field</button>
-            </div>
-        </div>
-        
-        <button onclick="submitText()">Submit Text</button>
-        <div id="textMessage" class="message"></div>
-    </div>
-    
-    <div id="FileUpload" class="tabcontent">
+    <div id="FileUpload">
         <h2>Upload File</h2>
         <div class="form-group">
             <label for="fileInput">Select File:</label>
@@ -407,19 +255,304 @@
         <div id="fileMessage" class="message"></div>
     </div>
     
-    <div id="Search" class="tabcontent">
-        <h2>Search Uploads</h2>
-        <div class="search-container">
-            <input type="text" id="searchQuery" placeholder="Search term...">
-            <select id="searchField">
-                <option value="">All Fields</option>
-                <option value="title">Title</option>
-                <option value="author">Author</option>
-                <option value="publisher">Publisher</option>
-                <option value="tags">Tags</option>
-                <option value="series">Series</option>
-                <option value="identifier">Identifier</option>
-                <option value="originalFilename">Original Filename</option>
-            </select>
-            <button onclick="searchUploads()" class="button-secondary">Search</button>
-        </div>
+    <div class="uploads">
+        <h2>Uploaded Files</h2>
+        <div id="uploadsList"></div>
+    </div>
+
+    <script>
+        // Toggle metadata fields visibility
+        function toggleMetadataFields(id) {
+            const fields = document.getElementById(id);
+            if (fields.classList.contains('hidden')) {
+                fields.classList.remove('hidden');
+            } else {
+                fields.classList.add('hidden');
+            }
+        }
+        
+        // Update file label when file is selected
+        function updateFileLabel() {
+            const fileInput = document.getElementById('fileInput');
+            const fileName = document.getElementById('fileName');
+            const fileInfo = document.getElementById('fileInfo');
+            
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileName.textContent = file.name;
+                
+                // Display file info
+                const fileSizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+                fileInfo.textContent = `Type: ${file.type}, Size: ${fileSizeInMB} MB`;
+            } else {
+                fileName.textContent = 'No file selected';
+                fileInfo.textContent = '';
+            }
+        }
+        
+        // Add custom metadata field
+        function addCustomField(containerId) {
+            const container = document.getElementById(containerId);
+            const fieldId = Math.random().toString(36).substring(2, 15);
+            
+            const fieldRow = document.createElement('div');
+            fieldRow.className = 'custom-field-row';
+            
+            const keyInput = document.createElement('input');
+            keyInput.type = 'text';
+            keyInput.placeholder = 'Field Name';
+            keyInput.className = 'custom-field-key';
+            
+            const valueInput = document.createElement('input');
+            valueInput.type = 'text';
+            valueInput.placeholder = 'Field Value';
+            valueInput.className = 'custom-field-value';
+            
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.className = 'metadata-field-remove';
+            removeButton.style.backgroundColor = '#f44336';
+            removeButton.onclick = function() {
+                container.removeChild(fieldRow);
+            };
+            
+            fieldRow.appendChild(keyInput);
+            fieldRow.appendChild(valueInput);
+            fieldRow.appendChild(removeButton);
+            
+            container.appendChild(fieldRow);
+        }
+        
+        // Collect metadata from form
+        function collectMetadata(prefix) {
+            const metadata = {};
+            
+            // Standard fields
+            const fields = ['Title', 'Author', 'Publisher', 'Tags', 'Series', 'Identifier'];
+            fields.forEach(field => {
+                const inputValue = document.getElementById(prefix + field).value.trim();
+                if (inputValue) {
+                    const key = field.toLowerCase();
+                    metadata[key] = inputValue;
+                    
+                    // If field is tags, convert comma-separated string to array
+                    if (field === 'Tags') {
+                        metadata[key] = inputValue.split(',').map(tag => tag.trim()).filter(tag => tag);
+                    }
+                }
+            });
+            
+            // Custom fields
+            const container = document.getElementById(prefix + 'CustomFields');
+            const customFieldRows = container.querySelectorAll('.custom-field-row');
+            customFieldRows.forEach(row => {
+                const keyInput = row.querySelector('.custom-field-key');
+                const valueInput = row.querySelector('.custom-field-value');
+                
+                if (keyInput.value.trim() && valueInput.value.trim()) {
+                    metadata[keyInput.value.trim()] = valueInput.value.trim();
+                }
+            });
+            
+            return metadata;
+        }
+        
+        // Upload file with metadata
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const fileMessage = document.getElementById('fileMessage');
+            
+            if (fileInput.files.length === 0) {
+                fileMessage.textContent = 'Please select a file first.';
+                fileMessage.className = 'error-message';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const metadata = collectMetadata('file');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('metadata', JSON.stringify(metadata));
+            
+            fileMessage.textContent = 'Uploading file...';
+            fileMessage.className = 'message';
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    fileMessage.textContent = data.message;
+                    fileMessage.className = 'success-message';
+                    
+                    // Clear form
+                    fileInput.value = '';
+                    document.getElementById('fileName').textContent = 'No file selected';
+                    document.getElementById('fileInfo').textContent = '';
+                    
+                    // Clear metadata fields
+                    const fields = ['Title', 'Author', 'Publisher', 'Tags', 'Series', 'Identifier'];
+                    fields.forEach(field => {
+                        document.getElementById('file' + field).value = '';
+                    });
+                    
+                    // Clear custom fields
+                    document.getElementById('fileCustomFields').innerHTML = '';
+                    
+                    // Refresh uploads list
+                    fetchUploads();
+                } else {
+                    fileMessage.textContent = data.message || 'Upload failed.';
+                    fileMessage.className = 'error-message';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                fileMessage.textContent = 'Error uploading file. Please try again.';
+                fileMessage.className = 'error-message';
+            });
+        }
+        
+        // Fetch and display uploaded files
+        function fetchUploads() {
+            const uploadsList = document.getElementById('uploadsList');
+            uploadsList.innerHTML = 'Loading...';
+            
+            fetch('/uploads')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.uploads.length === 0) {
+                            uploadsList.innerHTML = '<p>No files uploaded yet.</p>';
+                            return;
+                        }
+                        
+                        uploadsList.innerHTML = '';
+                        data.uploads.forEach(upload => {
+                            const uploadItem = document.createElement('div');
+                            uploadItem.className = 'upload-item';
+                            
+                            const uploadHeader = document.createElement('div');
+                            uploadHeader.className = 'upload-item-header';
+                            
+                            const titleDiv = document.createElement('div');
+                            
+                            const title = document.createElement('div');
+                            title.className = 'upload-title';
+                            
+                            // Use title from metadata or original filename or just filename
+                            if (upload.metadata && upload.metadata.title) {
+                                title.textContent = upload.metadata.title;
+                            } else if (upload.metadata && upload.metadata.originalFilename) {
+                                title.textContent = upload.metadata.originalFilename;
+                            } else {
+                                title.textContent = upload.filename;
+                            }
+                            
+                            const info = document.createElement('div');
+                            info.className = 'upload-info';
+                            
+                            // Show upload date if available
+                            if (upload.metadata && upload.metadata.uploadDate) {
+                                const date = new Date(upload.metadata.uploadDate);
+                                info.textContent = `Uploaded: ${date.toLocaleString()}`;
+                            }
+                            
+                            titleDiv.appendChild(title);
+                            titleDiv.appendChild(info);
+                            
+                            const actions = document.createElement('div');
+                            actions.className = 'action-buttons';
+                            
+                            const viewBtn = document.createElement('a');
+                            viewBtn.textContent = 'View';
+                            viewBtn.className = 'action-button view-btn';
+                            viewBtn.href = `/uploads/${upload.filename}`;
+                            viewBtn.target = '_blank';
+                            
+                            const downloadBtn = document.createElement('a');
+                            downloadBtn.textContent = 'Download';
+                            downloadBtn.className = 'action-button download-btn';
+                            downloadBtn.href = `/download/${upload.filename}`;
+                            
+                            actions.appendChild(viewBtn);
+                            actions.appendChild(downloadBtn);
+                            
+                            uploadHeader.appendChild(titleDiv);
+                            uploadHeader.appendChild(actions);
+                            uploadItem.appendChild(uploadHeader);
+                            
+                            // Add metadata if available
+                            if (upload.metadata) {
+                                const metadataDiv = document.createElement('div');
+                                metadataDiv.className = 'upload-metadata';
+                                
+                                const metadataTable = document.createElement('table');
+                                metadataTable.className = 'metadata-table';
+                                
+                                // Add each metadata field to table
+                                Object.entries(upload.metadata).forEach(([key, value]) => {
+                                    // Skip system metadata for display clarity
+                                    if (['uploadDate', 'lastModified'].includes(key)) {
+                                        return;
+                                    }
+                                    
+                                    const row = document.createElement('tr');
+                                    
+                                    const keyCell = document.createElement('td');
+                                    keyCell.textContent = key;
+                                    
+                                    const valueCell = document.createElement('td');
+                                    if (Array.isArray(value)) {
+                                        valueCell.textContent = value.join(', ');
+                                    } else if (typeof value === 'object') {
+                                        valueCell.textContent = JSON.stringify(value);
+                                    } else {
+                                        valueCell.textContent = value;
+                                    }
+                                    
+                                    row.appendChild(keyCell);
+                                    row.appendChild(valueCell);
+                                    metadataTable.appendChild(row);
+                                });
+                                
+                                metadataDiv.appendChild(metadataTable);
+                                uploadItem.appendChild(metadataDiv);
+                                
+                                // Toggle metadata visibility on click
+                                uploadHeader.onclick = function(e) {
+                                    // Don't toggle if clicking on action buttons
+                                    if (e.target.closest('.action-buttons')) {
+                                        return;
+                                    }
+                                    
+                                    if (metadataDiv.style.display === 'block') {
+                                        metadataDiv.style.display = 'none';
+                                    } else {
+                                        metadataDiv.style.display = 'block';
+                                    }
+                                };
+                            }
+                            
+                            uploadsList.appendChild(uploadItem);
+                        });
+                    } else {
+                        uploadsList.innerHTML = '<p>Error loading uploads.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    uploadsList.innerHTML = '<p>Error loading uploads. Please refresh the page.</p>';
+                });
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchUploads();
+        });
+    </script>
+</body>
+</html>

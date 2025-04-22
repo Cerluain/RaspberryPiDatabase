@@ -53,45 +53,6 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Handle text submissions
-app.post('/submit', (req, res) => {
-    console.log('Received text submission request');
-    const { text, metadata } = req.body;
-    
-    if (!text || text.trim() === '') {
-        console.log('Empty submission rejected');
-        return res.status(400).json({ success: false, message: 'Text is required' });
-    }
-    
-    // Generate unique filename with timestamp
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const uniqueId = uuidv4().slice(0, 8);
-    const filename = `${timestamp}-${uniqueId}.txt`;
-    const filepath = path.join(uploadsDir, filename);
-    
-    // Write text to file
-    fs.writeFile(filepath, text, (err) => {
-        if (err) {
-            console.error('Error saving submission:', err);
-            return res.status(500).json({ success: false, message: 'Failed to save submission' });
-        }
-        
-        // Save metadata if provided
-        if (metadata) {
-            const metadataFilepath = path.join(metadataDir, `${filename}.json`);
-            fs.writeFile(metadataFilepath, JSON.stringify(metadata, null, 2), (err) => {
-                if (err) {
-                    console.error('Error saving metadata:', err);
-                    // Continue despite metadata error
-                }
-            });
-        }
-        
-        console.log(`Text submission saved: ${filename}`);
-        res.json({ success: true, message: 'Text submitted successfully', filename });
-    });
-});
-
 // Handle file uploads with metadata
 app.post('/upload', upload.single('file'), (req, res) => {
     console.log('Received file upload request');
@@ -208,64 +169,6 @@ app.get('/metadata/:filename', (req, res) => {
     });
 });
 
-// Update file metadata
-app.put('/metadata/:filename', (req, res) => {
-    const filename = req.params.filename;
-    const metadata = req.body;
-    
-    console.log(`Updating metadata for: ${filename}`);
-    
-    // Sanitize filename to prevent directory traversal
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-        console.error('Invalid filename requested:', filename);
-        return res.status(400).json({ success: false, message: 'Invalid filename' });
-    }
-    
-    const metadataFilepath = path.join(metadataDir, `${filename}.json`);
-    
-    // First check if file exists
-    if (!fs.existsSync(path.join(uploadsDir, filename))) {
-        return res.status(404).json({ success: false, message: 'File not found' });
-    }
-    
-    // Read existing metadata first
-    fs.readFile(metadataFilepath, 'utf8', (err, data) => {
-        let existingMetadata = {};
-        
-        // If metadata file exists, parse it
-        if (!err) {
-            try {
-                existingMetadata = JSON.parse(data);
-            } catch (parseError) {
-                console.error('Error parsing existing metadata:', parseError);
-                // Continue with empty metadata if parsing fails
-            }
-        }
-        
-        // Merge existing metadata with new metadata
-        const updatedMetadata = { ...existingMetadata, ...metadata };
-        
-        // Preserve certain system fields
-        if (existingMetadata.originalFilename) {
-            updatedMetadata.originalFilename = existingMetadata.originalFilename;
-        }
-        if (existingMetadata.uploadDate) {
-            updatedMetadata.uploadDate = existingMetadata.uploadDate;
-        }
-        updatedMetadata.lastModified = new Date().toISOString();
-        
-        // Write updated metadata
-        fs.writeFile(metadataFilepath, JSON.stringify(updatedMetadata, null, 2), (writeErr) => {
-            if (writeErr) {
-                console.error('Error writing metadata:', writeErr);
-                return res.status(500).json({ success: false, message: 'Failed to update metadata' });
-            }
-            
-            res.json({ success: true, message: 'Metadata updated successfully', metadata: updatedMetadata });
-        });
-    });
-});
-
 // Get file content
 app.get('/uploads/:filename', (req, res) => {
     const filename = req.params.filename;
@@ -332,85 +235,6 @@ app.get('/download/:filename', (req, res) => {
                 return res.status(500).json({ success: false, message: 'Error downloading file' });
             }
         });
-    });
-});
-
-// Search uploads by metadata
-app.get('/search', (req, res) => {
-    const query = req.query.q?.toLowerCase();
-    const field = req.query.field;
-    
-    console.log(`Searching uploads with query: ${query}, field: ${field}`);
-    
-    if (!query) {
-        return res.status(400).json({ success: false, message: 'Search query is required' });
-    }
-    
-    fs.readdir(metadataDir, (err, files) => {
-        if (err) {
-            console.error('Error reading metadata directory:', err);
-            return res.status(500).json({ success: false, message: 'Failed to search uploads' });
-        }
-        
-        const searchPromises = files.map(metadataFile => {
-            return new Promise((resolve) => {
-                const metadataFilepath = path.join(metadataDir, metadataFile);
-                fs.readFile(metadataFilepath, 'utf8', (err, data) => {
-                    if (err) {
-                        resolve(null);
-                        return;
-                    }
-                    
-                    try {
-                        const metadata = JSON.parse(data);
-                        const filename = metadataFile.slice(0, -5); // Remove .json extension
-                        
-                        // Skip if the file doesn't exist anymore
-                        if (!fs.existsSync(path.join(uploadsDir, filename))) {
-                            resolve(null);
-                            return;
-                        }
-                        
-                        // Search in specific field if provided
-                        if (field) {
-                            if (metadata[field] && 
-                                String(metadata[field]).toLowerCase().includes(query)) {
-                                resolve({ filename, metadata });
-                            } else {
-                                resolve(null);
-                            }
-                            return;
-                        }
-                        
-                        // Search in all fields
-                        const matchFound = Object.values(metadata).some(value => {
-                            return value && String(value).toLowerCase().includes(query);
-                        });
-                        
-                        if (matchFound) {
-                            resolve({ filename, metadata });
-                        } else {
-                            resolve(null);
-                        }
-                    } catch (error) {
-                        console.error('Error parsing metadata JSON during search:', error);
-                        resolve(null);
-                    }
-                });
-            });
-        });
-        
-        Promise.all(searchPromises)
-            .then(results => {
-                // Filter out null results
-                const matches = results.filter(result => result !== null);
-                console.log(`Found ${matches.length} matches for search query`);
-                res.json({ success: true, results: matches });
-            })
-            .catch(error => {
-                console.error('Error processing search:', error);
-                res.status(500).json({ success: false, message: 'Error processing search' });
-            });
     });
 });
 
